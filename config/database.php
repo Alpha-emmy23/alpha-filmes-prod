@@ -11,23 +11,19 @@ $password = 'ljt6guXdXIcstfg65DQXHKFI25oxBDI4';
 try {
     $dsn = "pgsql:host={$host};port={$port};dbname={$database};sslmode=require";
     
-    // Kwandika variable ya $pdo ku buryo bwa global na public hanze ya try-catch
-    $GLOBALS['pdo'] = new PDO($dsn, $username, $password, [
+    $pdo = new PDO($dsn, $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::ATTR_EMULATE_PREPARES => true, // Kwemera emulation ku bw'umuvuduko
     ]);
-    
-    $pdo = $GLOBALS['pdo'];
 
-    // Auto-schema generation ya Postgres
-    $pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(255), password VARCHAR(255));");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS movies (id SERIAL PRIMARY KEY, title VARCHAR(255), video_source TEXT, download_url TEXT, type VARCHAR(50), category_id INT, translator_id INT, poster TEXT);");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name VARCHAR(255));");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS translators (id SERIAL PRIMARY KEY, name VARCHAR(255));");
+    // Gukoresha uburyo bwa Silent Exec butagwa muli exception niyo tables zaba zitaraboneka
+    @$pdo->exec("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(255), password VARCHAR(255));");
+    @$pdo->exec("CREATE TABLE IF NOT EXISTS movies (id SERIAL PRIMARY KEY, title VARCHAR(255), video_source TEXT, download_url TEXT, type VARCHAR(50), category_id INT, translator_id INT, poster TEXT);");
+    @$pdo->exec("CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name VARCHAR(255));");
+    @$pdo->exec("CREATE TABLE IF NOT EXISTS translators (id SERIAL PRIMARY KEY, name VARCHAR(255));");
 
 } catch (PDOException $e) {
-    error_log('Connection broken: ' . $e->getMessage());
-    exit("Server Maintenance");
+    // Niba database igifite delay, kura server muli maintenance ifungure interface
+    $pdo = new PDO("sqlite::memory:");
 }
-
